@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bell, Eye, EyeOff, Globe, Lock, Mail, Save, Shield, Upload, User, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -22,10 +22,36 @@ export default function SettingsPage() {
   const logout = useAuthStore((state) => state.logout);
   const [activeTab, setActiveTab] = useState('General');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notificationStates, setNotificationStates] = useState([true, false, true, true]);
   const [is2FAEnabled, setIs2FAEnabled] = useState(true);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+
+  useEffect(() => {
+    const savedEnabled = localStorage.getItem('notificationsEnabled');
+    const savedStates = localStorage.getItem('notificationStates');
+
+    if (savedEnabled !== null) {
+      setNotificationsEnabled(savedEnabled === 'true');
+    }
+
+    if (savedStates) {
+      try {
+        setNotificationStates(JSON.parse(savedStates));
+      } catch {
+        setNotificationStates([true, false, true, true]);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('notificationsEnabled', JSON.stringify(notificationsEnabled));
+  }, [notificationsEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('notificationStates', JSON.stringify(notificationStates));
+  }, [notificationStates]);
 
   const handleSave = (message: any = 'Settings saved successfully') => {
     const finalMessage = typeof message === 'string' ? message : 'Settings saved successfully';
@@ -194,6 +220,14 @@ export default function SettingsPage() {
                 <CardDescription>Choose how you want to be notified about project updates.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+                  <div>
+                    <p className="font-medium">Enable notifications</p>
+                    <p className="text-sm text-muted-foreground">Turn all notification preferences on or off.</p>
+                  </div>
+                  <Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
+                </div>
+
                 {[
                   { title: 'Email notifications', desc: 'Receive daily digests and immediate task alerts.' },
                   { title: 'Desktop alerts', desc: 'Get real-time browser notifications for mentions.' },
@@ -205,7 +239,11 @@ export default function SettingsPage() {
                       <p className="font-medium">{item.title}</p>
                       <p className="text-sm text-muted-foreground">{item.desc}</p>
                     </div>
-                    <Switch checked={notificationStates[index]} onCheckedChange={() => toggleNotification(index)} />
+                    <Switch
+                      checked={notificationStates[index]}
+                      onCheckedChange={() => toggleNotification(index)}
+                      disabled={!notificationsEnabled}
+                    />
                   </div>
                 ))}
               </CardContent>
