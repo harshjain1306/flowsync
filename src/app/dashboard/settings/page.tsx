@@ -243,6 +243,7 @@ export default function SettingsPage() {
                       checked={notificationStates[index]}
                       onCheckedChange={() => toggleNotification(index)}
                       disabled={!notificationsEnabled}
+                      className="ml-auto"
                     />
                   </div>
                 ))}
